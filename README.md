@@ -244,6 +244,260 @@ ou
 /secret
 ```
 
+## Exemplos de Requisições (CURL)
+
+Para testar o bot localmente ou entender o formato das requisições do Google Chat, use estes exemplos:
+
+### 1. Solicitar um Secret
+
+Simula um usuário solicitando um secret:
+
+```bash
+curl -X POST http://localhost:3000/webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "MESSAGE",
+    "message": {
+      "text": "/secret projeto-producao database-password",
+      "sender": {
+        "name": "users/123456789",
+        "displayName": "João Silva",
+        "email": "joao.silva@empresa.com"
+      },
+      "createTime": "2024-01-15T10:30:00.000Z",
+      "space": {
+        "name": "spaces/AAAAabcd123",
+        "displayName": "Equipe DevOps"
+      },
+      "thread": {
+        "name": "spaces/AAAAabcd123/threads/xyz789"
+      }
+    },
+    "user": {
+      "name": "users/123456789",
+      "displayName": "João Silva",
+      "email": "joao.silva@empresa.com"
+    },
+    "space": {
+      "name": "spaces/AAAAabcd123",
+      "type": "ROOM"
+    }
+  }'
+```
+
+**Resposta esperada:**
+- Card de aprovação é exibido no espaço
+- Contém informações do solicitante, projeto e secret
+- Botões "Aprovar" e "Negar" disponíveis
+
+### 2. Solicitar Secret com Versão Específica
+
+Solicita uma versão específica do secret:
+
+```bash
+curl -X POST http://localhost:3000/webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "MESSAGE",
+    "message": {
+      "text": "/secret projeto-producao api-key 5",
+      "sender": {
+        "name": "users/123456789",
+        "displayName": "João Silva",
+        "email": "joao.silva@empresa.com"
+      },
+      "space": {
+        "name": "spaces/AAAAabcd123"
+      },
+      "thread": {
+        "name": "spaces/AAAAabcd123/threads/xyz789"
+      }
+    },
+    "user": {
+      "name": "users/123456789",
+      "displayName": "João Silva",
+      "email": "joao.silva@empresa.com"
+    },
+    "space": {
+      "name": "spaces/AAAAabcd123"
+    }
+  }'
+```
+
+### 3. Aprovar uma Solicitação
+
+Simula um aprovador clicando no botão "Aprovar":
+
+```bash
+curl -X POST http://localhost:3000/webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "CARD_CLICKED",
+    "action": {
+      "actionMethodName": "approve",
+      "parameters": [
+        {
+          "key": "requestId",
+          "value": "users/123456789-1705315800000"
+        }
+      ]
+    },
+    "user": {
+      "name": "users/987654321",
+      "displayName": "Maria Aprovadora",
+      "email": "maria.aprovadora@empresa.com"
+    },
+    "message": {
+      "name": "spaces/AAAAabcd123/messages/msg123",
+      "sender": {
+        "name": "users/bot"
+      },
+      "space": {
+        "name": "spaces/AAAAabcd123"
+      },
+      "thread": {
+        "name": "spaces/AAAAabcd123/threads/xyz789"
+      }
+    },
+    "space": {
+      "name": "spaces/AAAAabcd123"
+    }
+  }'
+```
+
+**Resposta esperada:**
+- Card atualizado mostrando status "Aprovado"
+- Nome do aprovador exibido
+- Secret enviado via DM ao solicitante original
+
+### 4. Negar uma Solicitação
+
+Simula um aprovador clicando no botão "Negar":
+
+```bash
+curl -X POST http://localhost:3000/webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "CARD_CLICKED",
+    "action": {
+      "actionMethodName": "deny",
+      "parameters": [
+        {
+          "key": "requestId",
+          "value": "users/123456789-1705315800000"
+        }
+      ]
+    },
+    "user": {
+      "name": "users/987654321",
+      "displayName": "Maria Aprovadora",
+      "email": "maria.aprovadora@empresa.com"
+    },
+    "message": {
+      "name": "spaces/AAAAabcd123/messages/msg123",
+      "sender": {
+        "name": "users/bot"
+      },
+      "space": {
+        "name": "spaces/AAAAabcd123"
+      },
+      "thread": {
+        "name": "spaces/AAAAabcd123/threads/xyz789"
+      }
+    },
+    "space": {
+      "name": "spaces/AAAAabcd123"
+    }
+  }'
+```
+
+### 5. Comando de Ajuda
+
+Solicita informações de ajuda:
+
+```bash
+curl -X POST http://localhost:3000/webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "MESSAGE",
+    "message": {
+      "text": "help",
+      "sender": {
+        "name": "users/123456789",
+        "displayName": "João Silva",
+        "email": "joao.silva@empresa.com"
+      }
+    },
+    "user": {
+      "name": "users/123456789",
+      "displayName": "João Silva",
+      "email": "joao.silva@empresa.com"
+    },
+    "space": {
+      "name": "spaces/AAAAabcd123"
+    }
+  }'
+```
+
+### 6. Verificar Health do Bot
+
+Verifica se o bot está funcionando:
+
+```bash
+curl http://localhost:3000/health
+```
+
+**Resposta esperada:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "pendingRequests": 2,
+  "configuredProjects": ["projeto-a", "projeto-b"],
+  "totalProjects": 2
+}
+```
+
+### 📋 Fluxo Completo de Exemplo
+
+**1. Usuário solicita secret:**
+```bash
+# João solicita um secret
+curl -X POST http://localhost:3000/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"type":"MESSAGE","message":{"text":"/secret projeto-a api-key"},...}'
+
+# Resposta: Card de aprovação criado
+```
+
+**2. Aprovador aprova:**
+```bash
+# Maria aprova a solicitação
+curl -X POST http://localhost:3000/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"type":"CARD_CLICKED","action":{"actionMethodName":"approve"},...}'
+
+# Resultado:
+# - Card atualizado para "Aprovado"
+# - João recebe DM com o secret
+# - Log de auditoria criado
+```
+
+**3. Verificar status:**
+```bash
+# Verificar quantas solicitações pendentes
+curl http://localhost:3000/health
+
+# Resposta: { "pendingRequests": 0 }
+```
+
+### 💡 Dicas para Testes
+
+- **Substitua `localhost:3000`** pela URL do seu ngrok ou Cloud Run
+- **Ajuste os emails** para corresponder aos seus `APPROVER_EMAILS`
+- **Use `requestId` únicos** no formato `users/{userId}-{timestamp}`
+- **Teste com projetos configurados** em `SA_CONFIGS` ou `PROJECT_SA_MAPPING`
+
 ## Considerações de Segurança
 
 - ✅ Apenas aprovadores designados (em `APPROVER_EMAILS`) podem aprovar solicitações
