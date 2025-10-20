@@ -1,66 +1,66 @@
-# Quick Start Guide
+# Guia de Início Rápido
 
-Get your Google Chat Secret Manager Bot running in 15 minutes!
+Coloque seu Bot de Google Chat para Secret Manager funcionando em 15 minutos!
 
-## Prerequisites Checklist
+## Checklist de Pré-requisitos
 
-- [ ] Node.js 16+ installed
-- [ ] Google Cloud Platform account
-- [ ] Google Workspace with Google Chat access
-- [ ] GCP project created
+- [ ] Node.js 16+ instalado
+- [ ] Conta no Google Cloud Platform
+- [ ] Google Workspace com acesso ao Google Chat
+- [ ] Projeto GCP criado
 
-## Step-by-Step Setup
+## Configuração Passo a Passo
 
-### 1. Enable APIs (2 minutes)
+### 1. Habilitar APIs (2 minutos)
 
 ```bash
-# Set your project
-gcloud config set project YOUR-PROJECT-ID
+# Configurar seu projeto
+gcloud config set project SEU-PROJECT-ID
 
-# Enable required APIs
+# Habilitar APIs necessárias
 gcloud services enable chat.googleapis.com secretmanager.googleapis.com
 ```
 
-### 2. Create Service Account (3 minutes)
+### 2. Criar Service Account (3 minutos)
 
 ```bash
-# Create service account
+# Criar service account
 gcloud iam service-accounts create gchat-secret-bot \
-  --display-name="Google Chat Secret Manager Bot"
+  --display-name="Bot de Secret Manager do Google Chat"
 
-# Get your project ID
+# Obter ID do projeto
 export PROJECT_ID=$(gcloud config get-value project)
 
-# Grant Secret Manager access
+# Conceder acesso ao Secret Manager
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:gchat-secret-bot@${PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor"
 
-# Create and download key
+# Criar e baixar chave
 gcloud iam service-accounts keys create service-account-key.json \
   --iam-account=gchat-secret-bot@${PROJECT_ID}.iam.gserviceaccount.com
 ```
 
-### 3. Install Application (2 minutes)
+### 3. Instalar Aplicação (2 minutos)
 
 ```bash
-# Clone and install
+# Clonar e instalar
 cd gchat-secret-manager-bot
 npm install
 
-# Configure environment
+# Configurar ambiente
 cp .env.example .env
 ```
 
-Edit `.env`:
+Editar `.env`:
 ```env
 PORT=3000
 GOOGLE_APPLICATION_CREDENTIALS=./service-account-key.json
-APPROVER_EMAILS=your-email@company.com,approver@company.com
-GCP_PROJECT_ID=your-project-id
+APPROVER_EMAILS=seu-email@empresa.com,aprovador@empresa.com
+GCP_PROJECT_ID=seu-project-id
 ```
 
-### 4. Test Locally with ngrok (3 minutes)
+### 4. Testar Localmente com ngrok (3 minutos)
 
 Terminal 1:
 ```bash
@@ -72,51 +72,51 @@ Terminal 2:
 ngrok http 3000
 ```
 
-Copy the HTTPS URL (e.g., `https://abc123.ngrok-free.app`)
+Copiar a URL HTTPS (ex: `https://abc123.ngrok-free.app`)
 
-### 5. Configure Google Chat App (5 minutes)
+### 5. Configurar App do Google Chat (5 minutos)
 
-1. Go to: https://console.cloud.google.com/apis/api/chat.googleapis.com/hangouts-chat
-2. Click **"Configuration"**
-3. Fill in:
-   - **App name**: Secret Manager Bot
-   - **Avatar URL**: `https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png`
-   - **Description**: Secure secret access with approval
-   - **Functionality**: Check both options
-   - **Connection settings**: App URL → Your ngrok URL + `/webhook`
-   - **Permissions**: Specific people and groups
+1. Acesse: https://console.cloud.google.com/apis/api/chat.googleapis.com/hangouts-chat
+2. Clique em **"Configuração"**
+3. Preencha:
+   - **Nome do app**: Secret Manager Bot
+   - **URL do avatar**: `https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png`
+   - **Descrição**: Acesso seguro a secrets com aprovação
+   - **Funcionalidade**: Marque ambas as opções
+   - **Configurações de conexão**: URL do app → Sua URL do ngrok + `/webhook`
+   - **Permissões**: Pessoas e grupos específicos
 
-4. Click **"Save"**
+4. Clique em **"Salvar"**
 
-### 6. Test It! (1 minute)
+### 6. Teste! (1 minuto)
 
-1. Open Google Chat
-2. Search for "Secret Manager Bot"
-3. Send: `/secret my-project my-secret`
-4. Click Approve (if you're an approver)
-5. Check your DM for the secret!
+1. Abra o Google Chat
+2. Procure por "Secret Manager Bot"
+3. Envie: `/secret meu-projeto meu-secret`
+4. Clique em Aprovar (se você for aprovador)
+5. Verifique sua DM pelo secret!
 
-## Common Issues
+## Problemas Comuns
 
-**Bot doesn't respond:**
-- Check if webhook URL is accessible: `curl https://your-ngrok-url/webhook`
-- Verify logs in your terminal
+**Bot não responde:**
+- Verifique se a URL do webhook está acessível: `curl https://sua-url-ngrok/webhook`
+- Verifique os logs no seu terminal
 
-**Can't approve:**
-- Your email must be in `APPROVER_EMAILS`
-- Restart the bot after changing `.env`
+**Não consigo aprovar:**
+- Seu email deve estar em `APPROVER_EMAILS`
+- Reinicie o bot após mudar o `.env`
 
-**Secret not found:**
-- Verify project name and secret name
-- Check service account has `Secret Manager Secret Accessor` role
+**Secret não encontrado:**
+- Verifique o nome do projeto e do secret
+- Verifique se a service account tem a role `Secret Manager Secret Accessor`
 
-## Next Steps
+## Próximos Passos
 
-- [ ] Deploy to Cloud Run for production (see README.md)
-- [ ] Add more approvers to `.env`
-- [ ] Test with your team
-- [ ] Set up monitoring
+- [ ] Fazer deploy no Cloud Run para produção (veja README.md)
+- [ ] Adicionar mais aprovadores no `.env`
+- [ ] Testar com sua equipe
+- [ ] Configurar monitoramento
 
-## Need Help?
+## Precisa de Ajuda?
 
-See the full [README.md](./README.md) for detailed documentation.
+Veja o [README.md](./README.md) completo para documentação detalhada.

@@ -1,173 +1,173 @@
-# Google Chat Secret Manager Bot 🔐
+# Bot de Google Chat para Secret Manager 🔐
 
-A secure Node.js Express API that integrates Google Chat with Google Secret Manager, featuring an approval workflow for accessing secrets.
+Uma API Node.js Express segura que integra Google Chat com Google Secret Manager, com fluxo de aprovação para acesso a secrets.
 
-## Features
+## Funcionalidades
 
-- 🔒 **Secure Secret Access**: Request secrets from Google Secret Manager
-- ✅ **Approval Workflow**: Designated approvers must authorize secret access
-- 💬 **Google Chat Integration**: Interactive cards and private messaging
-- 🔑 **Private Delivery**: Secrets are sent privately to requesters
-- 📝 **Audit Trail**: All requests are logged with requester and approver information
-- 🎯 **Multi-Project Support**: Use different Service Accounts per GCP project
-- 🔢 **Version Control**: Specify secret version (default: 'latest')
+- 🔒 **Acesso Seguro a Secrets**: Solicite secrets do Google Secret Manager
+- ✅ **Fluxo de Aprovação**: Aprovadores designados devem autorizar o acesso
+- 💬 **Integração com Google Chat**: Cards interativos e mensagens privadas
+- 🔑 **Entrega Privada**: Secrets são enviados privativamente aos solicitantes
+- 📝 **Trilha de Auditoria**: Todas as solicitações são registradas com informações do solicitante e aprovador
+- 🎯 **Suporte Multi-Projeto**: Use Service Accounts diferentes por projeto GCP
+- 🔢 **Controle de Versão**: Especifique a versão do secret (padrão: 'latest')
 
-## Architecture
+## Arquitetura
 
-1. User requests a secret via Google Chat command: `/secret <project-name> <secret-name>`
-2. Bot creates an approval card visible to the space/room
-3. Authorized approvers can click "Approve" or "Deny"
-4. On approval, bot fetches the secret from Secret Manager
-5. Secret is sent privately to the requester via direct message
+1. Usuário solicita um secret via comando no Google Chat: `/secret <nome-do-projeto> <nome-do-secret>`
+2. Bot cria um card de aprovação visível no espaço/sala
+3. Aprovadores autorizados podem clicar em "Aprovar" ou "Negar"
+4. Na aprovação, o bot busca o secret no Secret Manager
+5. Secret é enviado privativamente ao solicitante via mensagem direta
 
-## Prerequisites
+## Pré-requisitos
 
-- Node.js 16+ and npm
-- Google Cloud Platform account
-- Google Workspace with Google Chat enabled
-- GCP project with Secret Manager API enabled
+- Node.js 16+ e npm
+- Conta no Google Cloud Platform
+- Google Workspace com Google Chat habilitado
+- Projeto GCP com API do Secret Manager habilitada
 
-## Setup Instructions
+## Instruções de Configuração
 
-### 1. Create a Google Cloud Project
+### 1. Criar um Projeto no Google Cloud
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Note your Project ID
+1. Acesse o [Console do Google Cloud](https://console.cloud.google.com/)
+2. Crie um novo projeto ou selecione um existente
+3. Anote o ID do seu projeto
 
-### 2. Enable Required APIs
+### 2. Habilitar APIs Necessárias
 
-Enable the following APIs in your GCP project:
+Habilite as seguintes APIs no seu projeto GCP:
 
 ```bash
 gcloud services enable chat.googleapis.com
 gcloud services enable secretmanager.googleapis.com
 ```
 
-Or enable them via the [API Library](https://console.cloud.google.com/apis/library):
+Ou habilite-as via [Biblioteca de APIs](https://console.cloud.google.com/apis/library):
 - Google Chat API
 - Secret Manager API
 
-### 3. Create a Service Account
+### 3. Criar uma Service Account
 
-1. Go to [IAM & Admin > Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts)
-2. Click **"Create Service Account"**
-3. Fill in the details:
-   - **Name**: `gchat-secret-bot`
-   - **Description**: Service account for Google Chat Secret Manager Bot
-4. Click **"Create and Continue"**
-5. Grant the following roles:
-   - `Secret Manager Secret Accessor` (to read secrets)
-   - `Chat Bot` (to send messages)
-6. Click **"Continue"** and then **"Done"**
+1. Acesse [IAM e Admin > Contas de Serviço](https://console.cloud.google.com/iam-admin/serviceaccounts)
+2. Clique em **"Criar Conta de Serviço"**
+3. Preencha os detalhes:
+   - **Nome**: `gchat-secret-bot`
+   - **Descrição**: Conta de serviço para o Bot de Secret Manager do Google Chat
+4. Clique em **"Criar e Continuar"**
+5. Conceda as seguintes roles:
+   - `Secret Manager Secret Accessor` (para ler secrets)
+   - `Chat Bot` (para enviar mensagens)
+6. Clique em **"Continuar"** e depois em **"Concluir"**
 
-### 4. Create Service Account Key
+### 4. Criar Chave da Service Account
 
-1. Click on the newly created service account
-2. Go to the **"Keys"** tab
-3. Click **"Add Key"** > **"Create new key"**
-4. Select **JSON** format
-5. Click **"Create"** - the key file will download
-6. Rename the file to `service-account-key.json`
-7. Move it to your project root directory
+1. Clique na conta de serviço recém-criada
+2. Vá para a aba **"Chaves"**
+3. Clique em **"Adicionar Chave"** > **"Criar nova chave"**
+4. Selecione o formato **JSON**
+5. Clique em **"Criar"** - o arquivo de chave será baixado
+6. Renomeie o arquivo para `service-account-key.json`
+7. Mova-o para o diretório raiz do seu projeto
 
-⚠️ **Important**: Never commit this file to version control!
+⚠️ **Importante**: Nunca faça commit deste arquivo no controle de versão!
 
-### 5. Configure Secret Manager Permissions
+### 5. Configurar Permissões do Secret Manager
 
-For each GCP project containing secrets you want to access:
+Para cada projeto GCP contendo secrets que você deseja acessar:
 
-1. Go to [Secret Manager](https://console.cloud.google.com/security/secret-manager)
-2. Select the project
-3. For each secret (or at project level):
-   - Click the secret name
-   - Go to **"Permissions"** tab
-   - Click **"Grant Access"**
-   - Add your service account email: `gchat-secret-bot@YOUR-PROJECT-ID.iam.gserviceaccount.com`
-   - Select role: **"Secret Manager Secret Accessor"**
-   - Click **"Save"**
+1. Acesse o [Secret Manager](https://console.cloud.google.com/security/secret-manager)
+2. Selecione o projeto
+3. Para cada secret (ou em nível de projeto):
+   - Clique no nome do secret
+   - Vá para a aba **"Permissões"**
+   - Clique em **"Conceder Acesso"**
+   - Adicione o email da sua service account: `gchat-secret-bot@SEU-PROJECT-ID.iam.gserviceaccount.com`
+   - Selecione a role: **"Secret Manager Secret Accessor"**
+   - Clique em **"Salvar"**
 
-### 6. Create Google Chat App
+### 6. Criar App do Google Chat
 
-1. Go to [Google Cloud Console > Google Chat API](https://console.cloud.google.com/apis/api/chat.googleapis.com)
-2. Click **"Configuration"** in the left sidebar
-3. Fill in the app details:
+1. Acesse [Console do Google Cloud > API do Google Chat](https://console.cloud.google.com/apis/api/chat.googleapis.com)
+2. Clique em **"Configuração"** na barra lateral esquerda
+3. Preencha os detalhes do app:
 
-   **App name**: `Secret Manager Bot`
+   **Nome do app**: `Secret Manager Bot`
    
-   **Avatar URL**: `https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png`
+   **URL do avatar**: `https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png`
    
-   **Description**: `Secure access to Google Secret Manager with approval workflow`
+   **Descrição**: `Acesso seguro ao Google Secret Manager com fluxo de aprovação`
 
-4. **Functionality**:
-   - ☑️ Receive 1:1 messages
-   - ☑️ Join spaces and group conversations
+4. **Funcionalidade**:
+   - ☑️ Receber mensagens 1:1
+   - ☑️ Participar de espaços e conversas em grupo
 
-5. **Connection settings**:
-   - Select **"App URL"**
-   - **App URL**: `https://your-domain.com/webhook` (see deployment section below)
+5. **Configurações de conexão**:
+   - Selecione **"URL do app"**
+   - **URL do app**: `https://seu-dominio.com/webhook` (veja a seção de deploy abaixo)
    
-6. **Slash commands** (optional):
-   - Command: `/secret`
-   - Description: `Request a secret from Google Secret Manager`
+6. **Comandos de barra** (opcional):
+   - Comando: `/secret`
+   - Descrição: `Solicitar um secret do Google Secret Manager`
 
-7. **Permissions**:
-   - Select **"Specific people and groups in your domain"**
-   - Add users/groups who can use the bot
+7. **Permissões**:
+   - Selecione **"Pessoas e grupos específicos no seu domínio"**
+   - Adicione usuários/grupos que podem usar o bot
 
-8. Click **"Save"**
+8. Clique em **"Salvar"**
 
-### 7. Install the Application
+### 7. Instalar a Aplicação
 
-1. Clone this repository:
+1. Clone este repositório:
 ```bash
-git clone <repository-url>
+git clone <url-do-repositorio>
 cd gchat-secret-manager-bot
 ```
 
-2. Install dependencies:
+2. Instale as dependências:
 ```bash
 npm install
 ```
 
-3. Create `.env` file:
+3. Crie o arquivo `.env`:
 ```bash
 cp .env.example .env
 ```
 
-4. Edit `.env` file:
+4. Edite o arquivo `.env`:
 ```env
 PORT=3000
 GOOGLE_APPLICATION_CREDENTIALS=./service-account-key.json
-APPROVER_EMAILS=approver1@yourcompany.com,approver2@yourcompany.com
-GCP_PROJECT_ID=your-project-id
+APPROVER_EMAILS=aprovador1@suaempresa.com,aprovador2@suaempresa.com
+GCP_PROJECT_ID=seu-project-id
 ```
 
-⚠️ **Important**: Add the email addresses of users who can approve secret requests
+⚠️ **Importante**: Adicione os endereços de email dos usuários que podem aprovar solicitações de secrets
 
-📚 **Multi-Project Setup**: If you have multiple GCP projects and want to use different Service Accounts for each, see [MULTI_PROJECT_SETUP.md](./MULTI_PROJECT_SETUP.md) for detailed configuration instructions.
+📚 **Configuração Multi-Projeto**: Se você tem múltiplos projetos GCP e quer usar Service Accounts diferentes para cada um, veja [MULTI_PROJECT_SETUP.md](./MULTI_PROJECT_SETUP.md) para instruções detalhadas de configuração.
 
-### 8. Deploy the Application
+### 8. Fazer Deploy da Aplicação
 
-You need to make your bot accessible via HTTPS. Choose one option:
+Você precisa tornar seu bot acessível via HTTPS. Escolha uma opção:
 
-#### Option A: Use ngrok (for testing)
+#### Opção A: Usar ngrok (para testes)
 
-1. Install [ngrok](https://ngrok.com/)
-2. Start your bot locally:
+1. Instale o [ngrok](https://ngrok.com/)
+2. Inicie seu bot localmente:
 ```bash
 npm start
 ```
-3. In another terminal, expose it:
+3. Em outro terminal, exponha-o:
 ```bash
 ngrok http 3000
 ```
-4. Copy the HTTPS URL (e.g., `https://abc123.ngrok.io`)
-5. Update your Google Chat app configuration with: `https://abc123.ngrok.io/webhook`
+4. Copie a URL HTTPS (ex: `https://abc123.ngrok.io`)
+5. Atualize a configuração do seu app Google Chat com: `https://abc123.ngrok.io/webhook`
 
-#### Option B: Deploy to Google Cloud Run
+#### Opção B: Deploy no Google Cloud Run
 
-1. Create a `Dockerfile`:
+1. Crie um `Dockerfile`:
 ```dockerfile
 FROM node:18-alpine
 WORKDIR /app
@@ -178,154 +178,154 @@ EXPOSE 3000
 CMD ["npm", "start"]
 ```
 
-2. Build and deploy:
+2. Build e deploy:
 ```bash
 gcloud run deploy gchat-secret-bot \
   --source . \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars APPROVER_EMAILS=approver@company.com
+  --set-env-vars APPROVER_EMAILS=aprovador@empresa.com
 ```
 
-3. Update Google Chat app configuration with the Cloud Run URL
+3. Atualize a configuração do app Google Chat com a URL do Cloud Run
 
-#### Option C: Deploy to any hosting service
+#### Opção C: Deploy em qualquer serviço de hospedagem
 
-Deploy to Heroku, AWS, Azure, or any other platform that supports Node.js applications. Make sure to:
-- Set environment variables
-- Upload service account key securely
-- Use HTTPS
+Faça deploy no Heroku, AWS, Azure, ou qualquer outra plataforma que suporte aplicações Node.js. Certifique-se de:
+- Configurar variáveis de ambiente
+- Fazer upload da chave da service account de forma segura
+- Usar HTTPS
 
-### 9. Test the Bot
+### 9. Testar o Bot
 
-1. Open Google Chat
-2. Search for your bot: **"Secret Manager Bot"**
-3. Start a conversation or add it to a space
-4. Test with a command:
+1. Abra o Google Chat
+2. Procure pelo seu bot: **"Secret Manager Bot"**
+3. Inicie uma conversa ou adicione-o a um espaço
+4. Teste com um comando:
 ```
-/secret my-project-id database-password
-```
-
-## Usage
-
-### Request a Secret
-
-In any space where the bot is present:
-
-```
-/secret <project-name> <secret-name>
+/secret meu-project-id senha-database
 ```
 
-**Example:**
+## Uso
+
+### Solicitar um Secret
+
+Em qualquer espaço onde o bot esteja presente:
+
 ```
-/secret production-project api-key
+/secret <nome-do-projeto> <nome-do-secret>
 ```
 
-### Approval Process
+**Exemplo:**
+```
+/secret projeto-producao chave-api
+```
 
-1. Bot posts an interactive card with request details
-2. Designated approvers see "Approve" and "Deny" buttons
-3. Approver clicks a button
-4. On approval:
-   - Bot fetches the secret from Secret Manager
-   - Sends the secret privately to the requester
-   - Updates the card to show approval status
+### Processo de Aprovação
 
-### Get Help
+1. Bot posta um card interativo com detalhes da solicitação
+2. Aprovadores designados veem botões "Aprovar" e "Negar"
+3. Aprovador clica em um botão
+4. Na aprovação:
+   - Bot busca o secret no Secret Manager
+   - Envia o secret privativamente ao solicitante
+   - Atualiza o card para mostrar o status de aprovação
+
+### Obter Ajuda
 
 ```
 help
 ```
 
-or
+ou
 
 ```
 /secret
 ```
 
-## Security Considerations
+## Considerações de Segurança
 
-- ✅ Only designated approvers (in `APPROVER_EMAILS`) can approve requests
-- ✅ Secrets are sent privately via DM, never in public spaces
-- ✅ Service account has minimal required permissions
-- ✅ All requests are logged for audit purposes
-- ✅ Pending requests are tracked with timestamps
-- ⚠️ Store your service account key securely
-- ⚠️ Use HTTPS for webhook endpoint
-- ⚠️ Consider using a database for production (instead of in-memory storage)
+- ✅ Apenas aprovadores designados (em `APPROVER_EMAILS`) podem aprovar solicitações
+- ✅ Secrets são enviados privativamente via DM, nunca em espaços públicos
+- ✅ Service account tem permissões mínimas necessárias
+- ✅ Todas as solicitações são registradas para fins de auditoria
+- ✅ Solicitações pendentes são rastreadas com timestamps
+- ⚠️ Armazene sua chave de service account de forma segura
+- ⚠️ Use HTTPS para o endpoint do webhook
+- ⚠️ Considere usar um banco de dados para produção (ao invés de armazenamento em memória)
 
-## Troubleshooting
+## Solução de Problemas
 
-### Bot doesn't respond
+### Bot não responde
 
-1. Check bot logs for errors
-2. Verify webhook URL is correct and accessible
-3. Ensure Google Chat API is enabled
-4. Check service account permissions
+1. Verifique os logs do bot para erros
+2. Verifique se a URL do webhook está correta e acessível
+3. Certifique-se de que a API do Google Chat está habilitada
+4. Verifique as permissões da service account
 
-### "Error fetching secret"
+### "Erro ao buscar secret"
 
-1. Verify the project name is correct
-2. Ensure the secret exists in Secret Manager
-3. Confirm service account has `Secret Manager Secret Accessor` role
-4. Check service account key is valid
+1. Verifique se o nome do projeto está correto
+2. Certifique-se de que o secret existe no Secret Manager
+3. Confirme que a service account tem a role `Secret Manager Secret Accessor`
+4. Verifique se a chave da service account é válida
 
-### "Unauthorized" when clicking Approve
+### "Não autorizado" ao clicar em Aprovar
 
-1. Verify your email is in the `APPROVER_EMAILS` environment variable
-2. Restart the bot after updating environment variables
-3. Check for typos in email addresses
+1. Verifique se seu email está na variável de ambiente `APPROVER_EMAILS`
+2. Reinicie o bot após atualizar as variáveis de ambiente
+3. Verifique se há erros de digitação nos endereços de email
 
-### Private message not received
+### Mensagem privada não recebida
 
-1. Ensure service account has `Chat Bot` role
-2. Check that user has started a DM with the bot at least once
-3. Verify `googleapis` package is installed correctly
+1. Certifique-se de que a service account tem a role `Chat Bot`
+2. Verifique se o usuário iniciou uma DM com o bot pelo menos uma vez
+3. Verifique se o pacote `googleapis` está instalado corretamente
 
-## API Endpoints
+## Endpoints da API
 
-- `POST /webhook` - Google Chat webhook handler
-- `GET /health` - Health check endpoint
+- `POST /webhook` - Handler do webhook do Google Chat
+- `GET /health` - Endpoint de health check
 
-## Development
+## Desenvolvimento
 
-### Run locally
+### Executar localmente
 
 ```bash
 npm run dev
 ```
 
-### Environment Variables
+### Variáveis de Ambiente
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `PORT` | Server port | No (default: 3000) |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Path to service account key | Yes |
-| `APPROVER_EMAILS` | Comma-separated approver emails | Yes |
-| `GCP_PROJECT_ID` | GCP project ID (optional) | No |
+| Variável | Descrição | Obrigatória |
+|----------|-----------|-------------|
+| `PORT` | Porta do servidor | Não (padrão: 3000) |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Caminho para chave da service account | Sim |
+| `APPROVER_EMAILS` | Emails dos aprovadores separados por vírgula | Sim |
+| `GCP_PROJECT_ID` | ID do projeto GCP (opcional) | Não |
 
-## Production Considerations
+## Considerações para Produção
 
-For production deployment:
+Para deploy em produção:
 
-1. **Use a database** to store pending requests (Redis, Firestore, PostgreSQL)
-2. **Implement request expiration** (e.g., requests expire after 1 hour)
-3. **Add rate limiting** to prevent abuse
-4. **Enable request verification** from Google Chat
-5. **Set up monitoring and alerting**
-6. **Use secret rotation** for service account keys
-7. **Implement audit logging** to a persistent store
-8. **Add request reason field** for better audit trail
+1. **Use um banco de dados** para armazenar solicitações pendentes (Redis, Firestore, PostgreSQL)
+2. **Implemente expiração de solicitações** (ex: solicitações expiram após 1 hora)
+3. **Adicione rate limiting** para prevenir abuso
+4. **Habilite verificação de solicitações** do Google Chat
+5. **Configure monitoramento e alertas**
+6. **Use rotação de secrets** para chaves de service account
+7. **Implemente log de auditoria** em armazenamento persistente
+8. **Adicione campo de motivo** nas solicitações para melhor trilha de auditoria
 
-## License
+## Licença
 
 MIT
 
-## Support
+## Suporte
 
-For issues and questions, please create an issue in the repository.
+Para problemas e questões, por favor crie uma issue no repositório.
 
 ---
 
-**Built with ❤️ for secure secret management**
+**Desenvolvido com ❤️ para gerenciamento seguro de secrets**

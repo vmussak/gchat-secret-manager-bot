@@ -1,192 +1,192 @@
-# Testing Guide
+# Guia de Testes
 
-This guide helps you test the Google Chat Secret Manager Bot functionality.
+Este guia ajuda você a testar a funcionalidade do Bot de Google Chat para Secret Manager.
 
-## Prerequisites
+## Pré-requisitos
 
-- Bot is running (locally or deployed)
-- Service account has proper permissions
-- Google Chat app is configured
-- At least one test secret exists
+- Bot está rodando (localmente ou em deploy)
+- Service account tem permissões apropriadas
+- App do Google Chat está configurado
+- Pelo menos um secret de teste existe
 
-## Create Test Secrets
+## Criar Secrets de Teste
 
-### Using gcloud CLI
+### Usando gcloud CLI
 
 ```bash
-# Set your project
-export PROJECT_ID="your-project-id"
+# Configurar seu projeto
+export PROJECT_ID="seu-project-id"
 
-# Create a test secret
-echo -n "TestSecretValue123" | gcloud secrets create test-api-key \
+# Criar um secret de teste
+echo -n "ValorSecretoTeste123" | gcloud secrets create test-api-key \
   --project=$PROJECT_ID \
   --replication-policy="automatic" \
   --data-file=-
 
-# Grant access to service account
+# Conceder acesso à service account
 gcloud secrets add-iam-policy-binding test-api-key \
   --project=$PROJECT_ID \
   --member="serviceAccount:gchat-secret-bot@${PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor"
 ```
 
-### Using the helper script
+### Usando o script auxiliar
 
 ```bash
 cd examples
 chmod +x create-test-secret.sh
-./create-test-secret.sh your-project-id test-api-key "MySecretValue"
+./create-test-secret.sh seu-project-id test-api-key "MeuValorSecreto"
 ```
 
-## Test Scenarios
+## Cenários de Teste
 
-### Test 1: Bot Responds to Commands
+### Teste 1: Bot Responde a Comandos
 
-**Action:** Send a message to the bot
+**Ação:** Enviar uma mensagem para o bot
 ```
-hello
+olá
 ```
 
-**Expected:** Bot responds with usage instructions
+**Esperado:** Bot responde com instruções de uso
 
 ---
 
-### Test 2: Help Command
+### Teste 2: Comando de Ajuda
 
-**Action:** Send help command
+**Ação:** Enviar comando de ajuda
 ```
 help
 ```
 
-**Expected:** Bot displays help information with command syntax
+**Esperado:** Bot exibe informações de ajuda com sintaxe do comando
 
 ---
 
-### Test 3: Request a Secret (Happy Path)
+### Teste 3: Solicitar um Secret (Caminho Feliz)
 
-**Action:** Request a valid secret
+**Ação:** Solicitar um secret válido
 ```
-/secret your-project-id test-api-key
-```
-
-**Expected:**
-1. ✅ Bot displays an approval card
-2. ✅ Card shows requester info, project, and secret name
-3. ✅ Approve/Deny buttons are visible
-4. ✅ Status shows "Pending Approval"
-
----
-
-### Test 4: Approve Request (Authorized User)
-
-**Prerequisites:** Your email is in `APPROVER_EMAILS`
-
-**Action:** Click the "✅ APPROVE" button
-
-**Expected:**
-1. ✅ Card updates to show "Approved" status
-2. ✅ Approver's name is displayed
-3. ✅ Requester receives a private DM with the secret
-4. ✅ DM contains the secret value in a code block
-
----
-
-### Test 5: Deny Request
-
-**Action:** Click the "❌ DENY" button
-
-**Expected:**
-1. ✅ Card updates to show "Denied" status
-2. ✅ Denier's name is displayed
-3. ✅ No secret is sent
-4. ✅ Requester doesn't receive a DM
-
----
-
-### Test 6: Unauthorized Approval Attempt
-
-**Prerequisites:** Test with a user NOT in `APPROVER_EMAILS`
-
-**Action:** Click "APPROVE" or "DENY"
-
-**Expected:**
-1. ✅ Error message: "Unauthorized"
-2. ✅ Card doesn't update
-3. ✅ Request remains pending
-
----
-
-### Test 7: Invalid Secret Request
-
-**Action:** Request a non-existent secret
-```
-/secret your-project-id non-existent-secret
+/secret seu-project-id test-api-key
 ```
 
-**Expected:**
-1. ✅ Approval card is displayed
-2. ✅ When approved, error message is shown
-3. ✅ Error explains the secret doesn't exist or permission is denied
+**Esperado:**
+1. ✅ Bot exibe um card de aprovação
+2. ✅ Card mostra info do solicitante, projeto e nome do secret
+3. ✅ Botões Aprovar/Negar estão visíveis
+4. ✅ Status mostra "Aguardando Aprovação"
 
 ---
 
-### Test 8: Invalid Project Request
+### Teste 4: Aprovar Solicitação (Usuário Autorizado)
 
-**Action:** Request from a non-existent project
+**Pré-requisitos:** Seu email está em `APPROVER_EMAILS`
+
+**Ação:** Clicar no botão "✅ APROVAR"
+
+**Esperado:**
+1. ✅ Card atualiza para mostrar status "Aprovado"
+2. ✅ Nome do aprovador é exibido
+3. ✅ Solicitante recebe uma DM privada com o secret
+4. ✅ DM contém o valor do secret em um bloco de código
+
+---
+
+### Teste 5: Negar Solicitação
+
+**Ação:** Clicar no botão "❌ NEGAR"
+
+**Esperado:**
+1. ✅ Card atualiza para mostrar status "Negado"
+2. ✅ Nome de quem negou é exibido
+3. ✅ Nenhum secret é enviado
+4. ✅ Solicitante não recebe uma DM
+
+---
+
+### Teste 6: Tentativa de Aprovação Não Autorizada
+
+**Pré-requisitos:** Testar com um usuário que NÃO está em `APPROVER_EMAILS`
+
+**Ação:** Clicar em "APROVAR" ou "NEGAR"
+
+**Esperado:**
+1. ✅ Mensagem de erro: "Não autorizado"
+2. ✅ Card não atualiza
+3. ✅ Solicitação permanece pendente
+
+---
+
+### Teste 7: Solicitação de Secret Inválido
+
+**Ação:** Solicitar um secret inexistente
 ```
-/secret invalid-project-123 test-secret
+/secret seu-project-id secret-inexistente
 ```
 
-**Expected:**
-1. ✅ Approval card is displayed
-2. ✅ When approved, error message indicates project not found
+**Esperado:**
+1. ✅ Card de aprovação é exibido
+2. ✅ Quando aprovado, mensagem de erro é mostrada
+3. ✅ Erro explica que o secret não existe ou permissão negada
 
 ---
 
-### Test 9: Private Message Delivery
+### Teste 8: Solicitação de Projeto Inválido
 
-**Action:** Approve a secret request
+**Ação:** Solicitar de um projeto inexistente
+```
+/secret projeto-invalido-123 test-secret
+```
 
-**Expected:**
-1. ✅ Requester receives a DM from the bot
-2. ✅ DM contains project name and secret name
-3. ✅ Secret value is in a code block
-4. ✅ Security warning is included
+**Esperado:**
+1. ✅ Card de aprovação é exibido
+2. ✅ Quando aprovado, mensagem de erro indica projeto não encontrado
 
 ---
 
-### Test 10: Invalid Command
+### Teste 9: Entrega de Mensagem Privada
 
-**Action:** Send an invalid command
+**Ação:** Aprovar uma solicitação de secret
+
+**Esperado:**
+1. ✅ Solicitante recebe uma DM do bot
+2. ✅ DM contém nome do projeto e nome do secret
+3. ✅ Valor do secret está em um bloco de código
+4. ✅ Aviso de segurança está incluído
+
+---
+
+### Teste 10: Comando Inválido
+
+**Ação:** Enviar um comando inválido
 ```
 /secret
 ```
 
-**Expected:**
-1. ✅ Bot responds with usage instructions
-2. ✅ Explains the correct format
+**Esperado:**
+1. ✅ Bot responde com instruções de uso
+2. ✅ Explica o formato correto
 
 ---
 
-### Test 11: Multiple Simultaneous Requests
+### Teste 11: Múltiplas Solicitações Simultâneas
 
-**Action:** Multiple users request secrets at the same time
+**Ação:** Múltiplos usuários solicitam secrets ao mesmo tempo
 
-**Expected:**
-1. ✅ Each request gets its own card
-2. ✅ Cards can be approved independently
-3. ✅ Each requester gets their respective secret
+**Esperado:**
+1. ✅ Cada solicitação recebe seu próprio card
+2. ✅ Cards podem ser aprovados independentemente
+3. ✅ Cada solicitante recebe seu respectivo secret
 
 ---
 
-### Test 12: Health Check Endpoint
+### Teste 12: Endpoint de Health Check
 
-**Action:** Call the health endpoint
+**Ação:** Chamar o endpoint de health
 ```bash
-curl https://your-bot-url/health
+curl https://url-do-seu-bot/health
 ```
 
-**Expected:**
+**Esperado:**
 ```json
 {
   "status": "healthy",
@@ -197,21 +197,21 @@ curl https://your-bot-url/health
 
 ---
 
-## Automated Testing Script
+## Script de Teste Automatizado
 
-Create a test script to verify basic functionality:
+Crie um script de teste para verificar funcionalidade básica:
 
 ```bash
 #!/bin/bash
 
-BOT_URL="https://your-bot-url"
+BOT_URL="https://url-do-seu-bot"
 
-# Test health endpoint
-echo "Testing health endpoint..."
+# Testar endpoint de health
+echo "Testando endpoint de health..."
 curl -s $BOT_URL/health | jq .
 
-# Test webhook endpoint (should return 200)
-echo "Testing webhook endpoint..."
+# Testar endpoint de webhook (deve retornar 200)
+echo "Testando endpoint de webhook..."
 curl -X POST $BOT_URL/webhook \
   -H "Content-Type: application/json" \
   -d '{
@@ -221,8 +221,8 @@ curl -X POST $BOT_URL/webhook \
     },
     "user": {
       "name": "users/test",
-      "displayName": "Test User",
-      "email": "test@example.com"
+      "displayName": "Usuário Teste",
+      "email": "teste@exemplo.com"
     },
     "space": {
       "name": "spaces/test"
@@ -230,82 +230,82 @@ curl -X POST $BOT_URL/webhook \
   }'
 ```
 
-## Troubleshooting Tests
+## Solução de Problemas nos Testes
 
-### Test Fails: Bot Doesn't Respond
+### Teste Falha: Bot Não Responde
 
-**Check:**
-- [ ] Bot is running: `curl https://your-bot-url/health`
-- [ ] Webhook URL is correct in Google Chat config
-- [ ] Check bot logs for errors
+**Verificar:**
+- [ ] Bot está rodando: `curl https://url-do-seu-bot/health`
+- [ ] URL do webhook está correta na config do Google Chat
+- [ ] Verificar logs do bot para erros
 
-### Test Fails: "Error fetching secret"
+### Teste Falha: "Erro ao buscar secret"
 
-**Check:**
-- [ ] Project ID is correct
-- [ ] Secret exists: `gcloud secrets describe SECRET_NAME --project=PROJECT_ID`
-- [ ] Service account has access:
+**Verificar:**
+- [ ] ID do projeto está correto
+- [ ] Secret existe: `gcloud secrets describe NOME_SECRET --project=PROJECT_ID`
+- [ ] Service account tem acesso:
 ```bash
-gcloud secrets get-iam-policy SECRET_NAME --project=PROJECT_ID
+gcloud secrets get-iam-policy NOME_SECRET --project=PROJECT_ID
 ```
 
-### Test Fails: Private Message Not Received
+### Teste Falha: Mensagem Privada Não Recebida
 
-**Check:**
-- [ ] User has initiated a DM with the bot at least once
-- [ ] Service account has Chat Bot permissions
-- [ ] Check bot logs for "Error sending private message"
+**Verificar:**
+- [ ] Usuário iniciou uma DM com o bot pelo menos uma vez
+- [ ] Service account tem permissões de Chat Bot
+- [ ] Verificar logs do bot para "Error sending private message"
 
-### Test Fails: "Unauthorized" for Valid Approver
+### Teste Falha: "Não autorizado" para Aprovador Válido
 
-**Check:**
-- [ ] Email matches exactly (case-sensitive)
-- [ ] No extra spaces in `APPROVER_EMAILS`
-- [ ] Bot was restarted after updating `.env`
-- [ ] Check logs: `console.log` will show approver validation
+**Verificar:**
+- [ ] Email corresponde exatamente (sensível a maiúsculas/minúsculas)
+- [ ] Sem espaços extras em `APPROVER_EMAILS`
+- [ ] Bot foi reiniciado após atualizar `.env`
+- [ ] Verificar logs: `console.log` mostrará validação do aprovador
 
-## Test Checklist
+## Checklist de Testes
 
-Before going to production, verify:
+Antes de ir para produção, verificar:
 
-- [ ] All happy path tests pass
-- [ ] Error cases are handled gracefully
-- [ ] Private messages work correctly
-- [ ] Authorization works as expected
-- [ ] Multiple concurrent requests work
-- [ ] Invalid inputs don't crash the bot
-- [ ] Logs are clear and informative
-- [ ] Health endpoint responds correctly
+- [ ] Todos os testes de caminho feliz passam
+- [ ] Casos de erro são tratados graciosamente
+- [ ] Mensagens privadas funcionam corretamente
+- [ ] Autorização funciona como esperado
+- [ ] Múltiplas solicitações concorrentes funcionam
+- [ ] Entradas inválidas não quebram o bot
+- [ ] Logs são claros e informativos
+- [ ] Endpoint de health responde corretamente
 
-## Performance Testing
+## Teste de Performance
 
-For production readiness, test:
+Para prontidão em produção, testar:
 
-1. **Load:** 10+ simultaneous secret requests
-2. **Response time:** Approval card appears within 2 seconds
-3. **Secret delivery:** DM arrives within 5 seconds of approval
-4. **Memory:** Bot doesn't leak memory with pending requests
+1. **Carga:** 10+ solicitações de secret simultâneas
+2. **Tempo de resposta:** Card de aprovação aparece em até 2 segundos
+3. **Entrega de secret:** DM chega em até 5 segundos após aprovação
+4. **Memória:** Bot não vaza memória com solicitações pendentes
 
-## Security Testing
+## Teste de Segurança
 
-Verify security measures:
+Verificar medidas de segurança:
 
-- [ ] Secrets never appear in public spaces
-- [ ] Only approvers can approve/deny
-- [ ] Service account has minimal permissions
-- [ ] API keys/credentials are not logged
-- [ ] HTTPS is enforced for webhook
+- [ ] Secrets nunca aparecem em espaços públicos
+- [ ] Apenas aprovadores podem aprovar/negar
+- [ ] Service account tem permissões mínimas
+- [ ] Chaves de API/credenciais não são logadas
+- [ ] HTTPS é obrigatório para webhook
 
-## Monitoring
+## Monitoramento
 
-Set up monitoring for:
+Configurar monitoramento para:
 
-- Request volume
-- Approval/denial rates
-- Error rates
-- Response times
-- Failed secret fetches
+- Volume de solicitações
+- Taxas de aprovação/negação
+- Taxas de erro
+- Tempos de resposta
+- Falhas ao buscar secrets
 
 ---
 
-**Happy Testing! 🧪**
+**Bons Testes! 🧪**

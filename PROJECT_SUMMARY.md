@@ -1,246 +1,246 @@
-# Project Summary: Google Chat Secret Manager Bot
+# Resumo do Projeto: Bot de Google Chat para Secret Manager
 
-## 📋 Overview
+## 📋 Visão Geral
 
-A complete Node.js Express application that integrates Google Chat with Google Cloud Secret Manager, implementing a secure approval workflow for secret access requests.
+Uma aplicação Node.js Express completa que integra Google Chat com Google Cloud Secret Manager, implementando um fluxo de aprovação seguro para solicitações de acesso a secrets.
 
-## 🎯 Key Features Implemented
+## 🎯 Principais Funcionalidades Implementadas
 
-### 1. Secret Request Flow
-- Users request secrets via `/secret <project> <secret-name> [version]` command
-- Optional version parameter (defaults to 'latest')
-- Bot displays interactive approval cards with version info
-- Designated approvers can approve/deny requests
-- Secrets delivered privately via DM
+### 1. Fluxo de Solicitação de Secret
+- Usuários solicitam secrets via comando `/secret <projeto> <nome-do-secret> [versão]`
+- Parâmetro de versão opcional (padrão: 'latest')
+- Bot exibe cards de aprovação interativos com informação de versão
+- Aprovadores designados podem aprovar/negar solicitações
+- Secrets entregues privativamente via DM
 
-### 2. Security Features
-- Role-based access control (approvers only)
-- Private secret delivery (never in public spaces)
-- Google Cloud IAM integration
-- Audit trail via logging
-- **Multi-Project Support**: Different Service Accounts per GCP project
+### 2. Funcionalidades de Segurança
+- Controle de acesso baseado em roles (apenas aprovadores)
+- Entrega privada de secrets (nunca em espaços públicos)
+- Integração com Google Cloud IAM
+- Trilha de auditoria via logging
+- **Suporte Multi-Projeto**: Service Accounts diferentes por projeto GCP
 
-### 3. Google Chat Integration
-- Interactive card UI with version display
-- Slash commands
-- Direct messaging
-- Event handling (MESSAGE, CARD_CLICKED, ADDED_TO_SPACE)
+### 3. Integração com Google Chat
+- UI de card interativo com exibição de versão
+- Comandos de barra
+- Mensagens diretas
+- Tratamento de eventos (MESSAGE, CARD_CLICKED, ADDED_TO_SPACE)
 
-### 4. Google Secret Manager Integration
-- Fetch secrets from any GCP project
-- Service account authentication per project
-- Multiple project support with isolated credentials
-- Version-specific secret retrieval
+### 4. Integração com Google Secret Manager
+- Buscar secrets de qualquer projeto GCP
+- Autenticação de service account por projeto
+- Suporte a múltiplos projetos com credenciais isoladas
+- Recuperação de versão específica de secret
 
-## 📁 Project Structure
+## 📁 Estrutura do Projeto
 
 ```
 gchat-secret-manager-bot/
-├── server.js                      # Main Express application
-├── package.json                   # Dependencies and scripts
-├── Dockerfile                     # Container configuration
-├── .dockerignore                  # Docker ignore rules
-├── .env.example                   # Environment template
-├── .env.projects-a-b.example      # Multi-project example config
-├── .gitignore                     # Git ignore rules
-├── README.md                      # Comprehensive documentation
-├── QUICKSTART.md                  # 15-minute setup guide
-├── TESTING.md                     # Testing guide and checklist
-├── MULTI_PROJECT_SETUP.md         # Multi-project configuration guide
-├── PROJECT_SUMMARY.md             # This file
-├── deploy-cloud-run.sh            # Cloud Run deployment script
+├── server.js                      # Aplicação Express principal
+├── package.json                   # Dependências e scripts
+├── Dockerfile                     # Configuração de container
+├── .dockerignore                  # Regras de ignore do Docker
+├── .env.example                   # Template de ambiente
+├── .env.projects-a-b.example      # Exemplo de config multi-projeto
+├── .gitignore                     # Regras de ignore do Git
+├── README.md                      # Documentação abrangente
+├── QUICKSTART.md                  # Guia de 15 minutos
+├── TESTING.md                     # Guia e checklist de testes
+├── MULTI_PROJECT_SETUP.md         # Guia de config multi-projeto
+├── PROJECT_SUMMARY.md             # Este arquivo
+├── deploy-cloud-run.sh            # Script de deploy no Cloud Run
 └── examples/
-    └── create-test-secret.sh      # Helper script for test secrets
+    └── create-test-secret.sh      # Script auxiliar para secrets de teste
 ```
 
-## 🔧 Technical Stack
+## 🔧 Stack Técnico
 
 - **Runtime**: Node.js 18+
 - **Framework**: Express.js 4.x
-- **Google Cloud APIs**:
-  - `@google-cloud/secret-manager`: Secret Manager client
-  - `googleapis`: Google Chat API client
-- **Authentication**: Service Account (JSON key)
-- **Deployment**: Cloud Run, ngrok (dev), or any Node.js host
+- **APIs do Google Cloud**:
+  - `@google-cloud/secret-manager`: Cliente do Secret Manager
+  - `googleapis`: Cliente da API do Google Chat
+- **Autenticação**: Service Account (chave JSON)
+- **Deploy**: Cloud Run, ngrok (dev), ou qualquer host Node.js
 
-## 🚀 Deployment Options
+## 🚀 Opções de Deploy
 
-### Option 1: Local Development (ngrok)
+### Opção 1: Desenvolvimento Local (ngrok)
 ```bash
 npm install
 npm start
-# In another terminal:
+# Em outro terminal:
 ngrok http 3000
 ```
 
-### Option 2: Google Cloud Run
+### Opção 2: Google Cloud Run
 ```bash
 chmod +x deploy-cloud-run.sh
 ./deploy-cloud-run.sh
 ```
 
-### Option 3: Container Deployment
+### Opção 3: Deploy em Container
 ```bash
 docker build -t gchat-secret-bot .
 docker run -p 3000:3000 --env-file .env gchat-secret-bot
 ```
 
-## 🔑 Required Configuration
+## 🔑 Configuração Necessária
 
-### Environment Variables
+### Variáveis de Ambiente
 ```env
 PORT=3000
 GOOGLE_APPLICATION_CREDENTIALS=./service-account-key.json
-APPROVER_EMAILS=user1@company.com,user2@company.com
-GCP_PROJECT_ID=your-project-id
+APPROVER_EMAILS=usuario1@empresa.com,usuario2@empresa.com
+GCP_PROJECT_ID=seu-project-id
 ```
 
-### GCP Service Account Permissions
+### Permissões da Service Account GCP
 - `Secret Manager Secret Accessor`
-- `Chat Bot` (for DMs)
+- `Chat Bot` (para DMs)
 
-### Google Chat App Setup
-- App URL: `https://your-domain/webhook`
-- Enable 1:1 messages and group conversations
-- Add slash command: `/secret`
+### Configuração do App Google Chat
+- URL do app: `https://seu-dominio/webhook`
+- Habilitar mensagens 1:1 e conversas em grupo
+- Adicionar comando de barra: `/secret`
 
-## 📊 API Endpoints
+## 📊 Endpoints da API
 
-| Endpoint | Method | Description |
+| Endpoint | Método | Descrição |
 |----------|--------|-------------|
-| `/webhook` | POST | Google Chat events handler |
-| `/health` | GET | Health check (returns pending requests count) |
+| `/webhook` | POST | Handler de eventos do Google Chat |
+| `/health` | GET | Health check (retorna contagem de solicitações pendentes) |
 
-## 🔒 Security Measures
+## 🔒 Medidas de Segurança
 
-1. **Authorization**: Only emails in `APPROVER_EMAILS` can approve
-2. **Private Delivery**: Secrets sent via DM, never public
-3. **IAM Integration**: Uses GCP service accounts
-4. **No Secret Storage**: Secrets fetched on-demand, not cached
-5. **HTTPS Required**: Webhook must use secure connection
+1. **Autorização**: Apenas emails em `APPROVER_EMAILS` podem aprovar
+2. **Entrega Privada**: Secrets enviados via DM, nunca público
+3. **Integração IAM**: Usa service accounts do GCP
+4. **Sem Armazenamento de Secrets**: Secrets buscados sob demanda, não em cache
+5. **HTTPS Obrigatório**: Webhook deve usar conexão segura
 
-## 🎨 User Experience
+## 🎨 Experiência do Usuário
 
-### Request Flow
+### Fluxo de Solicitação
 ```
-User: /secret production-db password
+Usuário: /secret banco-producao senha
   ↓
-Bot: [Displays approval card with project/secret info]
+Bot: [Exibe card de aprovação com info de projeto/secret]
   ↓
-Approver: [Clicks Approve button]
+Aprovador: [Clica no botão Aprovar]
   ↓
-Bot: [Updates card to "Approved"]
+Bot: [Atualiza card para "Aprovado"]
   ↓
-Bot → User: [Sends secret via private DM]
+Bot → Usuário: [Envia secret via DM privada]
 ```
 
-### Error Handling
-- Invalid project/secret: Clear error message
-- Unauthorized approver: "Unauthorized" message
-- Permission denied: Helpful troubleshooting info
-- Bot helps: `help` command shows usage
+### Tratamento de Erros
+- Projeto/secret inválido: Mensagem de erro clara
+- Aprovador não autorizado: Mensagem "Não autorizado"
+- Permissão negada: Info útil para troubleshooting
+- Ajuda do bot: comando `help` mostra uso
 
-## 📈 Production Considerations
+## 📈 Considerações para Produção
 
-Implemented:
-- ✅ Health check endpoint
-- ✅ Structured logging
-- ✅ Error handling
-- ✅ Environment-based configuration
+Implementado:
+- ✅ Endpoint de health check
+- ✅ Logging estruturado
+- ✅ Tratamento de erros
+- ✅ Configuração baseada em ambiente
 
-Recommended additions:
-- [ ] Database for pending requests (replace in-memory Map)
-- [ ] Request expiration (auto-deny after X hours)
+Adições recomendadas:
+- [ ] Banco de dados para solicitações pendentes (substituir Map em memória)
+- [ ] Expiração de solicitações (auto-negar após X horas)
 - [ ] Rate limiting
-- [ ] Request verification from Google
-- [ ] Monitoring/alerting integration
-- [ ] Audit logging to persistent storage
+- [ ] Verificação de solicitação do Google
+- [ ] Integração de monitoramento/alertas
+- [ ] Log de auditoria em armazenamento persistente
 
-## 🧪 Testing Coverage
+## 🧪 Cobertura de Testes
 
-Comprehensive testing guide includes:
-- Unit test scenarios (12+ test cases)
-- Integration testing steps
-- Security testing checklist
-- Performance testing guidelines
-- Automated test script template
+Guia abrangente de testes inclui:
+- Cenários de teste unitário (12+ casos de teste)
+- Passos de teste de integração
+- Checklist de teste de segurança
+- Diretrizes de teste de performance
+- Template de script de teste automatizado
 
-## 📚 Documentation
+## 📚 Documentação
 
-Four comprehensive documents:
-1. **README.md**: Complete setup and usage guide
-2. **QUICKSTART.md**: 15-minute getting started guide
-3. **TESTING.md**: Testing scenarios and checklist
-4. **PROJECT_SUMMARY.md**: This overview
+Quatro documentos abrangentes:
+1. **README.md**: Guia completo de configuração e uso
+2. **QUICKSTART.md**: Guia de início em 15 minutos
+3. **TESTING.md**: Cenários de teste e checklist
+4. **PROJECT_SUMMARY.md**: Esta visão geral
 
-## 🛠️ Helper Scripts
+## 🛠️ Scripts Auxiliares
 
-1. **deploy-cloud-run.sh**: One-command Cloud Run deployment
-2. **create-test-secret.sh**: Create test secrets with proper IAM
+1. **deploy-cloud-run.sh**: Deploy no Cloud Run com um comando
+2. **create-test-secret.sh**: Criar secrets de teste com IAM apropriado
 
-## 💡 Usage Examples
+## 💡 Exemplos de Uso
 
-### Request a secret
+### Solicitar um secret
 ```
-/secret production-project database-password
+/secret projeto-producao senha-database
 ```
 
-### Get help
+### Obter ajuda
 ```
 help
 ```
 
-### Check bot health
+### Verificar saúde do bot
 ```bash
-curl https://your-bot-url/health
+curl https://url-do-seu-bot/health
 ```
 
-## 🔄 Workflow States
+## 🔄 Estados do Fluxo
 
 ```
-Pending → Approved → Secret Delivered
-       ↘ Denied → Request Rejected
+Pendente → Aprovado → Secret Entregue
+         ↘ Negado → Solicitação Rejeitada
 ```
 
-## 📞 Support
+## 📞 Suporte
 
-- Check logs for debugging
-- Verify webhook URL accessibility
-- Confirm service account permissions
-- Test with health endpoint
+- Verificar logs para debugging
+- Verificar acessibilidade da URL do webhook
+- Confirmar permissões da service account
+- Testar com endpoint de health
 
-## 🎓 Learning Resources
+## 🎓 Recursos de Aprendizado
 
-The code demonstrates:
-- Google Chat bot development
-- Card-based UI interactions
-- Secret Manager API usage
-- Express.js webhook handling
-- Service account authentication
-- Environment-based configuration
+O código demonstra:
+- Desenvolvimento de bot do Google Chat
+- Interações de UI baseadas em card
+- Uso da API do Secret Manager
+- Tratamento de webhook com Express.js
+- Autenticação de service account
+- Configuração baseada em ambiente
 
-## ✅ Completion Status
+## ✅ Status de Conclusão
 
-All requested features implemented:
-- ✅ Express API with Google Chat integration
-- ✅ Secret Manager integration
-- ✅ Approval workflow with group-based authorization
-- ✅ Private message delivery
-- ✅ Interactive cards
-- ✅ Comprehensive documentation
-- ✅ Google Chat bot creation guide
+Todas as funcionalidades solicitadas implementadas:
+- ✅ API Express com integração ao Google Chat
+- ✅ Integração com Secret Manager
+- ✅ Fluxo de aprovação com autorização baseada em grupo
+- ✅ Entrega de mensagem privada
+- ✅ Cards interativos
+- ✅ Documentação abrangente
+- ✅ Guia de criação de bot do Google Chat
 
-## 🚀 Next Steps
+## 🚀 Próximos Passos
 
-1. Install dependencies: `npm install`
-2. Configure `.env` file
-3. Set up GCP service account
-4. Create Google Chat app
-5. Deploy and test
-6. See QUICKSTART.md for detailed steps
+1. Instalar dependências: `npm install`
+2. Configurar arquivo `.env`
+3. Configurar service account do GCP
+4. Criar app do Google Chat
+5. Fazer deploy e testar
+6. Veja QUICKSTART.md para passos detalhados
 
 ---
 
-**Project Status**: ✅ **Complete and Ready for Deployment**
+**Status do Projeto**: ✅ **Completo e Pronto para Deploy**
 
-Built with best practices for security, usability, and maintainability.
+Construído com melhores práticas de segurança, usabilidade e manutenibilidade.
