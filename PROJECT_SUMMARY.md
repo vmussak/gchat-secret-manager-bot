@@ -7,8 +7,9 @@ A complete Node.js Express application that integrates Google Chat with Google C
 ## 🎯 Key Features Implemented
 
 ### 1. Secret Request Flow
-- Users request secrets via `/secret <project> <secret-name>` command
-- Bot displays interactive approval cards
+- Users request secrets via `/secret <project> <secret-name> [version]` command
+- Optional version parameter (defaults to 'latest')
+- Bot displays interactive approval cards with version info
 - Designated approvers can approve/deny requests
 - Secrets delivered privately via DM
 
@@ -17,35 +18,39 @@ A complete Node.js Express application that integrates Google Chat with Google C
 - Private secret delivery (never in public spaces)
 - Google Cloud IAM integration
 - Audit trail via logging
+- **Multi-Project Support**: Different Service Accounts per GCP project
 
 ### 3. Google Chat Integration
-- Interactive card UI
+- Interactive card UI with version display
 - Slash commands
 - Direct messaging
 - Event handling (MESSAGE, CARD_CLICKED, ADDED_TO_SPACE)
 
 ### 4. Google Secret Manager Integration
 - Fetch secrets from any GCP project
-- Service account authentication
-- Multiple project support
+- Service account authentication per project
+- Multiple project support with isolated credentials
+- Version-specific secret retrieval
 
 ## 📁 Project Structure
 
 ```
 gchat-secret-manager-bot/
-├── server.js                    # Main Express application
-├── package.json                 # Dependencies and scripts
-├── Dockerfile                   # Container configuration
-├── .dockerignore               # Docker ignore rules
-├── .env.example                # Environment template
-├── .gitignore                  # Git ignore rules
-├── README.md                   # Comprehensive documentation
-├── QUICKSTART.md              # 15-minute setup guide
-├── TESTING.md                 # Testing guide and checklist
-├── PROJECT_SUMMARY.md         # This file
-├── deploy-cloud-run.sh        # Cloud Run deployment script
+├── server.js                      # Main Express application
+├── package.json                   # Dependencies and scripts
+├── Dockerfile                     # Container configuration
+├── .dockerignore                  # Docker ignore rules
+├── .env.example                   # Environment template
+├── .env.projects-a-b.example      # Multi-project example config
+├── .gitignore                     # Git ignore rules
+├── README.md                      # Comprehensive documentation
+├── QUICKSTART.md                  # 15-minute setup guide
+├── TESTING.md                     # Testing guide and checklist
+├── MULTI_PROJECT_SETUP.md         # Multi-project configuration guide
+├── PROJECT_SUMMARY.md             # This file
+├── deploy-cloud-run.sh            # Cloud Run deployment script
 └── examples/
-    └── create-test-secret.sh  # Helper script for test secrets
+    └── create-test-secret.sh      # Helper script for test secrets
 ```
 
 ## 🔧 Technical Stack

@@ -9,6 +9,8 @@ A secure Node.js Express API that integrates Google Chat with Google Secret Mana
 - 💬 **Google Chat Integration**: Interactive cards and private messaging
 - 🔑 **Private Delivery**: Secrets are sent privately to requesters
 - 📝 **Audit Trail**: All requests are logged with requester and approver information
+- 🎯 **Multi-Project Support**: Use different Service Accounts per GCP project
+- 🔢 **Version Control**: Specify secret version (default: 'latest')
 
 ## Architecture
 
@@ -142,6 +144,8 @@ GCP_PROJECT_ID=your-project-id
 ```
 
 ⚠️ **Important**: Add the email addresses of users who can approve secret requests
+
+📚 **Multi-Project Setup**: If you have multiple GCP projects and want to use different Service Accounts for each, see [MULTI_PROJECT_SETUP.md](./MULTI_PROJECT_SETUP.md) for detailed configuration instructions.
 
 ### 8. Deploy the Application
 

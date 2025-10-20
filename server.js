@@ -10,9 +10,48 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(bodyParser.json());
 
-// Initialize Google Cloud clients
-const secretManagerClient = new SecretManagerServiceClient();
+// Initialize Google Chat client
 const chat = google.chat('v1');
+
+// Parse project configuration with Service Accounts
+// Format: PROJECT_SA_MAPPING=projeto-a:/path/to/sa-a.json,projeto-b:/path/to/sa-b.json
+const PROJECT_SA_MAPPING = {};
+const SECRET_MANAGER_CLIENTS = {};
+
+if (process.env.PROJECT_SA_MAPPING) {
+  const mappings = process.env.PROJECT_SA_MAPPING.split(',');
+  mappings.forEach(mapping => {
+    const [projectId, saKeyPath] = mapping.split(':').map(s => s.trim());
+    if (projectId && saKeyPath) {
+      PROJECT_SA_MAPPING[projectId] = saKeyPath;
+      // Initialize Secret Manager client for this project
+      SECRET_MANAGER_CLIENTS[projectId] = new SecretManagerServiceClient({
+        keyFilename: saKeyPath
+      });
+      console.log(`✓ Configured Secret Manager for project: ${projectId}`);
+    }
+  });
+}
+
+// Fallback: Default Secret Manager client (backward compatibility)
+const defaultClient = new SecretManagerServiceClient({
+  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS
+});
+
+// Function to get Secret Manager client for a project
+function getSecretManagerClient(projectId) {
+  if (SECRET_MANAGER_CLIENTS[projectId]) {
+    return SECRET_MANAGER_CLIENTS[projectId];
+  }
+  // Fallback to default client if project not in mapping
+  console.log(`⚠️  Using default SA for project: ${projectId}`);
+  return defaultClient;
+}
+
+// Get list of configured projects
+function getConfiguredProjects() {
+  return Object.keys(PROJECT_SA_MAPPING);
+}
 
 // In-memory storage for pending approval requests
 // In production, use a database like Redis, Firestore, or PostgreSQL
@@ -273,11 +312,14 @@ async function handleCardClick(event) {
  */
 async function handleApproval(request, requestId, approver, spaceName) {
   try {
+    // Get the appropriate Secret Manager client for this project
+    const client = getSecretManagerClient(request.projectName);
+    
     // Fetch secret from Secret Manager
     const secretPath = `projects/${request.projectName}/secrets/${request.secretName}/versions/${request.secretVersion}`;
     console.log(`Fetching secret: ${secretPath}`);
     
-    const [version] = await secretManagerClient.accessSecretVersion({
+    const [version] = await client.accessSecretVersion({
       name: secretPath
     });
 
@@ -431,7 +473,8 @@ function handleDenial(request, requestId, approver) {
  */
 async function sendPrivateMessage(userName, secretValue, projectName, secretName, secretVersion = 'latest') {
   try {
-    // Get auth client
+    // Get auth client for Google Chat (uses bot's main SA)
+    // Note: Chat messages are sent as the bot, not project-specific
     const auth = new google.auth.GoogleAuth({
       keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
       scopes: ['https://www.googleapis.com/auth/chat.bot']
@@ -469,7 +512,9 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    pendingRequests: pendingRequests.size
+    pendingRequests: pendingRequests.size,
+    configuredProjects: getConfiguredProjects(),
+    totalProjects: getConfiguredProjects().length
   });
 });
 
@@ -480,4 +525,11 @@ app.listen(PORT, () => {
   console.log(`🚀 Secret Manager Bot listening on port ${PORT}`);
   console.log(`📝 Webhook URL: http://localhost:${PORT}/webhook`);
   console.log(`👥 Approvers: ${APPROVER_EMAILS.join(', ')}`);
+  
+  const configuredProjects = getConfiguredProjects();
+  if (configuredProjects.length > 0) {
+    console.log(`📦 Configured projects (${configuredProjects.length}): ${configuredProjects.join(', ')}`);
+  } else {
+    console.log(`⚠️  No project-specific SAs configured. Using default SA for all projects.`);
+  }
 });
