@@ -53,7 +53,7 @@ app.post('/webhook', async (req, res) => {
   } catch (error) {
     console.error('Error handling webhook:', error);
     res.status(500).json({
-      text: `Error: ${error.message}`
+      text: `Erro: ${error.message}`
     });
   }
 });
@@ -63,14 +63,16 @@ app.post('/webhook', async (req, res) => {
  */
 function handleAddedToSpace(event) {
   return {
-    text: `👋 Hello! I'm the Secret Manager Bot.
+    text: `👋 Olá! Sou o Bot de Gerenciamento de Secrets.
 
-To request a secret, use the command:
-\`/secret <project-name> <secret-name>\`
+Para solicitar um secret, use o comando:
+\`/secret <nome-do-projeto> <nome-do-secret> [versão]\`
 
-Example: \`/secret my-project database-password\`
+Exemplos:
+\`/secret meu-projeto senha-database\` (versão 'latest')
+\`/secret meu-projeto senha-database 3\` (versão específica)
 
-Approvers will be notified and can approve your request. Once approved, you'll receive the secret privately.`
+Os aprovadores serão notificados e poderão aprovar sua solicitação. Após aprovado, você receberá o secret de forma privada.`
   };
 }
 
@@ -86,39 +88,42 @@ async function handleMessage(event) {
   console.log(`Message from ${sender.email}: ${message}`);
 
   // Check if message is a secret request
-  const secretRequestRegex = /^\/secret\s+(\S+)\s+(\S+)/i;
+  const secretRequestRegex = /^\/secret\s+(\S+)\s+(\S+)(?:\s+(\S+))?/i;
   const match = message.match(secretRequestRegex);
 
   if (match) {
     const projectName = match[1];
     const secretName = match[2];
+    const secretVersion = match[3] || 'latest';
 
-    return createApprovalCard(sender, spaceName, threadName, projectName, secretName);
+    return createApprovalCard(sender, spaceName, threadName, projectName, secretName, secretVersion);
   }
 
   // Help message
   if (message.toLowerCase().includes('help') || message === '/secret') {
     return {
-      text: `📚 **Secret Manager Bot Help**
+      text: `📚 **Ajuda do Bot de Gerenciamento de Secrets**
 
-**Request a secret:**
-\`/secret <project-name> <secret-name>\`
+**Solicitar um secret:**
+\`/secret <nome-do-projeto> <nome-do-secret> [versão]\`
 
-Example: \`/secret my-gcp-project api-key\`
+Exemplos:
+\`/secret meu-projeto-gcp chave-api\` (usa versão 'latest')
+\`/secret meu-projeto-gcp chave-api 5\` (usa versão específica)
 
-Authorized approvers will receive a notification and can approve your request. Once approved, you'll receive the secret in a private message.`
+Aprovadores autorizados receberão uma notificação e poderão aprovar sua solicitação. Após aprovado, você receberá o secret em uma mensagem privada.`
     };
   }
 
   return {
-    text: 'Unknown command. Use `/secret <project-name> <secret-name>` to request a secret, or type "help" for more information.'
+    text: 'Comando desconhecido. Use `/secret <nome-do-projeto> <nome-do-secret> [versão]` para solicitar um secret, ou digite "help" para mais informações.'
   };
 }
 
 /**
  * Create approval card for secret request
  */
-function createApprovalCard(requester, spaceName, threadName, projectName, secretName) {
+function createApprovalCard(requester, spaceName, threadName, projectName, secretName, secretVersion = 'latest') {
   const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
   // Store pending request
@@ -128,6 +133,7 @@ function createApprovalCard(requester, spaceName, threadName, projectName, secre
     threadName: threadName,
     projectName: projectName,
     secretName: secretName,
+    secretVersion: secretVersion,
     timestamp: new Date().toISOString()
   });
 
@@ -136,15 +142,15 @@ function createApprovalCard(requester, spaceName, threadName, projectName, secre
   return {
     cards: [{
       header: {
-        title: '🔐 Secret Access Request',
-        subtitle: `Requested by ${requester.displayName || requester.email}`,
+        title: '🔐 Solicitação de Acesso ao Secret',
+        subtitle: `Solicitado por ${requester.displayName || requester.email}`,
         imageUrl: 'https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png'
       },
       sections: [{
         widgets: [
           {
             keyValue: {
-              topLabel: 'Project',
+              topLabel: 'Projeto',
               content: projectName,
               contentMultiline: false,
               icon: 'BOOKMARK'
@@ -152,7 +158,7 @@ function createApprovalCard(requester, spaceName, threadName, projectName, secre
           },
           {
             keyValue: {
-              topLabel: 'Secret Name',
+              topLabel: 'Nome do Secret',
               content: secretName,
               contentMultiline: false,
               icon: 'KEY'
@@ -160,7 +166,15 @@ function createApprovalCard(requester, spaceName, threadName, projectName, secre
           },
           {
             keyValue: {
-              topLabel: 'Requester',
+              topLabel: 'Versão',
+              content: secretVersion,
+              contentMultiline: false,
+              icon: 'DESCRIPTION'
+            }
+          },
+          {
+            keyValue: {
+              topLabel: 'Solicitante',
               content: requester.email,
               contentMultiline: false,
               icon: 'PERSON'
@@ -169,7 +183,7 @@ function createApprovalCard(requester, spaceName, threadName, projectName, secre
           {
             keyValue: {
               topLabel: 'Status',
-              content: '⏳ Pending Approval',
+              content: '⏳ Aguardando Aprovação',
               contentMultiline: false
             }
           },
@@ -177,7 +191,7 @@ function createApprovalCard(requester, spaceName, threadName, projectName, secre
             buttons: [
               {
                 textButton: {
-                  text: '✅ APPROVE',
+                  text: '✅ APROVAR',
                   onClick: {
                     action: {
                       actionMethodName: 'approve',
@@ -191,7 +205,7 @@ function createApprovalCard(requester, spaceName, threadName, projectName, secre
               },
               {
                 textButton: {
-                  text: '❌ DENY',
+                  text: '❌ NEGAR',
                   onClick: {
                     action: {
                       actionMethodName: 'deny',
@@ -229,7 +243,7 @@ async function handleCardClick(event) {
         updatedWidget: {
           suggestions: {
             items: [{
-              text: `❌ Unauthorized: ${approver.email} is not in the approver list.`
+              text: `❌ Não autorizado: ${approver.email} não está na lista de aprovadores.`
             }]
           }
         }
@@ -241,7 +255,7 @@ async function handleCardClick(event) {
   const request = pendingRequests.get(requestId);
   if (!request) {
     return {
-      text: '❌ Request not found or already processed.'
+      text: '❌ Solicitação não encontrada ou já processada.'
     };
   }
 
@@ -251,7 +265,7 @@ async function handleCardClick(event) {
     return handleDenial(request, requestId, approver);
   }
 
-  return { text: 'Unknown action.' };
+  return { text: 'Ação desconhecida.' };
 }
 
 /**
@@ -260,7 +274,7 @@ async function handleCardClick(event) {
 async function handleApproval(request, requestId, approver, spaceName) {
   try {
     // Fetch secret from Secret Manager
-    const secretPath = `projects/${request.projectName}/secrets/${request.secretName}/versions/latest`;
+    const secretPath = `projects/${request.projectName}/secrets/${request.secretName}/versions/${request.secretVersion}`;
     console.log(`Fetching secret: ${secretPath}`);
     
     const [version] = await secretManagerClient.accessSecretVersion({
@@ -270,7 +284,7 @@ async function handleApproval(request, requestId, approver, spaceName) {
     const secretValue = version.payload.data.toString('utf8');
 
     // Send secret privately to requester
-    await sendPrivateMessage(request.requester.name, secretValue, request.projectName, request.secretName);
+    await sendPrivateMessage(request.requester.name, secretValue, request.projectName, request.secretName, request.secretVersion);
 
     // Remove from pending requests
     pendingRequests.delete(requestId);
@@ -282,29 +296,36 @@ async function handleApproval(request, requestId, approver, spaceName) {
       },
       cards: [{
         header: {
-          title: '✅ Secret Access Approved',
-          subtitle: `Approved by ${approver.displayName || approver.email}`,
+          title: '✅ Acesso ao Secret Aprovado',
+          subtitle: `Aprovado por ${approver.displayName || approver.email}`,
           imageUrl: 'https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png'
         },
         sections: [{
           widgets: [
             {
               keyValue: {
-                topLabel: 'Project',
+                topLabel: 'Projeto',
                 content: request.projectName,
                 icon: 'BOOKMARK'
               }
             },
             {
               keyValue: {
-                topLabel: 'Secret Name',
+                topLabel: 'Nome do Secret',
                 content: request.secretName,
                 icon: 'KEY'
               }
             },
             {
               keyValue: {
-                topLabel: 'Requester',
+                topLabel: 'Versão',
+                content: request.secretVersion,
+                icon: 'DESCRIPTION'
+              }
+            },
+            {
+              keyValue: {
+                topLabel: 'Solicitante',
                 content: request.requester.email,
                 icon: 'PERSON'
               }
@@ -312,13 +333,13 @@ async function handleApproval(request, requestId, approver, spaceName) {
             {
               keyValue: {
                 topLabel: 'Status',
-                content: '✅ Approved and sent privately',
+                content: '✅ Aprovado e enviado privadamente',
                 contentMultiline: false
               }
             },
             {
               keyValue: {
-                topLabel: 'Approved By',
+                topLabel: 'Aprovado Por',
                 content: approver.email,
                 contentMultiline: false,
                 icon: 'PERSON'
@@ -333,7 +354,7 @@ async function handleApproval(request, requestId, approver, spaceName) {
     pendingRequests.delete(requestId);
     
     return {
-      text: `❌ Error fetching secret: ${error.message}\n\nPlease ensure:\n- The project name is correct\n- The secret exists\n- The service account has Secret Manager Secret Accessor role`
+      text: `❌ Erro ao buscar secret: ${error.message}\n\nPor favor, certifique-se de que:\n- O nome do projeto está correto\n- O secret existe\n- A conta de serviço tem a role Secret Manager Secret Accessor`
     };
   }
 }
@@ -350,29 +371,36 @@ function handleDenial(request, requestId, approver) {
     },
     cards: [{
       header: {
-        title: '❌ Secret Access Denied',
-        subtitle: `Denied by ${approver.displayName || approver.email}`,
+        title: '❌ Acesso ao Secret Negado',
+        subtitle: `Negado por ${approver.displayName || approver.email}`,
         imageUrl: 'https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png'
       },
       sections: [{
         widgets: [
           {
             keyValue: {
-              topLabel: 'Project',
+              topLabel: 'Projeto',
               content: request.projectName,
               icon: 'BOOKMARK'
             }
           },
           {
             keyValue: {
-              topLabel: 'Secret Name',
+              topLabel: 'Nome do Secret',
               content: request.secretName,
               icon: 'KEY'
             }
           },
           {
             keyValue: {
-              topLabel: 'Requester',
+              topLabel: 'Versão',
+              content: request.secretVersion,
+              icon: 'DESCRIPTION'
+            }
+          },
+          {
+            keyValue: {
+              topLabel: 'Solicitante',
               content: request.requester.email,
               icon: 'PERSON'
             }
@@ -380,13 +408,13 @@ function handleDenial(request, requestId, approver) {
           {
             keyValue: {
               topLabel: 'Status',
-              content: '❌ Access Denied',
+              content: '❌ Acesso Negado',
               contentMultiline: false
             }
           },
           {
             keyValue: {
-              topLabel: 'Denied By',
+              topLabel: 'Negado Por',
               content: approver.email,
               contentMultiline: false,
               icon: 'PERSON'
@@ -401,7 +429,7 @@ function handleDenial(request, requestId, approver) {
 /**
  * Send private message to user with secret
  */
-async function sendPrivateMessage(userName, secretValue, projectName, secretName) {
+async function sendPrivateMessage(userName, secretValue, projectName, secretName, secretVersion = 'latest') {
   try {
     // Get auth client
     const auth = new google.auth.GoogleAuth({
@@ -413,11 +441,12 @@ async function sendPrivateMessage(userName, secretValue, projectName, secretName
 
     // Create DM space with user
     const message = {
-      text: `🔐 **Secret Delivered**\n\n` +
-            `**Project:** ${projectName}\n` +
-            `**Secret:** ${secretName}\n\n` +
+      text: `🔐 **Secret Entregue**\n\n` +
+            `**Projeto:** ${projectName}\n` +
+            `**Secret:** ${secretName}\n` +
+            `**Versão:** ${secretVersion}\n\n` +
             `\`\`\`\n${secretValue}\n\`\`\`\n\n` +
-            `⚠️ **Important:** Please store this secret securely and delete this message after copying it.`
+            `⚠️ **Importante:** Armazene este secret de forma segura e delete esta mensagem após copiá-lo.`
     };
 
     await chat.spaces.messages.create({
