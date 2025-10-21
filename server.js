@@ -179,14 +179,16 @@ function createApprovalCard(requester, spaceName, threadName, projectName, secre
   console.log(`Created approval request ${requestId} for ${requester.email}`);
 
   return {
-    cards: [{
-      header: {
-        title: '🔐 Solicitação de Acesso ao Secret',
-        subtitle: `Solicitado por ${requester.displayName || requester.email}`,
-        imageUrl: 'https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png'
-      },
-      sections: [{
-        widgets: [
+    cardsV2: [{
+      cardId: `approval-${requestId}`,
+      card: {
+        header: {
+          title: '🔐 Solicitação de Acesso ao Secret',
+          subtitle: `Solicitado por ${requester.displayName || requester.email}`,
+          imageUrl: 'https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png'
+        },
+        sections: [{
+          widgets: [
           {
             keyValue: {
               topLabel: 'Projeto',
@@ -258,8 +260,9 @@ function createApprovalCard(requester, spaceName, threadName, projectName, secre
               }
             ]
           }
-        ]
-      }]
+          ]
+        }]
+      }
     }]
   };
 }
@@ -336,13 +339,15 @@ async function handleApproval(request, requestId, approver, spaceName) {
       actionResponse: {
         type: 'UPDATE_MESSAGE'
       },
-      cards: [{
-        header: {
-          title: '✅ Acesso ao Secret Aprovado',
-          subtitle: `Aprovado por ${approver.displayName || approver.email}`,
-          imageUrl: 'https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png'
-        },
-        sections: [{
+      cardsV2: [{
+        cardId: `approval-${requestId}`,
+        card: {
+          header: {
+            title: '✅ Acesso ao Secret Aprovado',
+            subtitle: `Aprovado por ${approver.displayName || approver.email}`,
+            imageUrl: 'https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png'
+          },
+          sections: [{
           widgets: [
             {
               keyValue: {
@@ -388,7 +393,8 @@ async function handleApproval(request, requestId, approver, spaceName) {
               }
             }
           ]
-        }]
+          }]
+        }
       }]
     };
   } catch (error) {
@@ -411,14 +417,16 @@ function handleDenial(request, requestId, approver) {
     actionResponse: {
       type: 'UPDATE_MESSAGE'
     },
-    cards: [{
-      header: {
-        title: '❌ Acesso ao Secret Negado',
-        subtitle: `Negado por ${approver.displayName || approver.email}`,
-        imageUrl: 'https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png'
-      },
-      sections: [{
-        widgets: [
+    cardsV2: [{
+      cardId: `denial-${requestId}`,
+      card: {
+        header: {
+          title: '❌ Acesso ao Secret Negado',
+          subtitle: `Negado por ${approver.displayName || approver.email}`,
+          imageUrl: 'https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png'
+        },
+        sections: [{
+          widgets: [
           {
             keyValue: {
               topLabel: 'Projeto',
@@ -462,8 +470,9 @@ function handleDenial(request, requestId, approver) {
               icon: 'PERSON'
             }
           }
-        ]
-      }]
+          ]
+        }]
+      }
     }]
   };
 }
